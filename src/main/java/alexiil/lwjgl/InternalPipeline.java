@@ -12,18 +12,11 @@ public class InternalPipeline extends Pipeline {
     private int lastWidth = 0;
 
     public int getWidth() {
-        if (lastWidth != 0) {
-            int width = getManager().getWidth();
-            if (lastWidth != width) {
-                System.out.println("NEW WIDTH! " + width);
-            }
-            lastWidth = width;
-        }
         return getManager().getWidth();
     }
 
     public int getHeight() {
-        return getManager().getWidth();
+        return getManager().getHeight();
     }
 
     @Override

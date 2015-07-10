@@ -23,6 +23,7 @@ public class LwjglWindowManager {
     private final String windowName;
     private final Pipeline pipeline;
     private final List<Closure> closures = new ArrayList<Closure>();
+    private boolean close = false;
 
     public LwjglWindowManager(int width, int height, String windowName, Pipeline pipe) {
         this.width = width;
@@ -118,7 +119,7 @@ public class LwjglWindowManager {
 
         // Run the rendering loop until the user has attempted to close
         // the window or has pressed the ESCAPE key.
-        while (GLFW.glfwWindowShouldClose(window) == GL11.GL_FALSE) {
+        while (GLFW.glfwWindowShouldClose(window) == GL11.GL_FALSE && !close) {
             GL11.glClear(GL11.GL_COLOR_BUFFER_BIT | GL11.GL_DEPTH_BUFFER_BIT); // clear the framebuffer
 
             GL11.glPushMatrix();
@@ -141,6 +142,10 @@ public class LwjglWindowManager {
 
     public int getHeight() {
         return height;
+    }
+
+    public void close() {
+        close = true;
     }
 
     public <T extends Closure> T registerClosure(T closure) {

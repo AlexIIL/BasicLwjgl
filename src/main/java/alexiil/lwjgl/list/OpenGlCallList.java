@@ -90,10 +90,6 @@ public class OpenGlCallList implements IRenderCallList {
     }
 
     @Override
-    public void finish() {
-
-    }
-
     public void dispose() {
         if (listAddress != -1) {
             GL11.glDeleteLists(listAddress, 1);
