@@ -11,14 +11,14 @@ public class OpenGlWindow implements IWindow<OpenGlCallList> {
     private LwjglWindowManager window;
 
     @Override
-    public void open(int xPos, int yPos, int xSize, int ySize) {
+    public void open(int width, int height, String title) {
         Pipeline actual = new RunnablePipeline(null, () -> {
             if (render != null) {
                 render.run();
             }
         }, null);
         Pipeline internal = new InternalPipeline(actual);
-        window = new LwjglWindowManager(xSize, ySize, "", internal);
+        // window = new LwjglWindowManager(width, height, title, internal);
     }
 
     @Override
