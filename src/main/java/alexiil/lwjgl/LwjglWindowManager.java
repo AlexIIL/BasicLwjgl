@@ -24,6 +24,7 @@ public class LwjglWindowManager {
     private final Pipeline pipeline;
     private final List<Closure> closures = new ArrayList<Closure>();
     private boolean close = false;
+    public boolean mainWindow = false;
 
     public LwjglWindowManager(int width, int height, String windowName, Pipeline pipe) {
         this.width = width;
@@ -48,6 +49,9 @@ public class LwjglWindowManager {
             while (closures.size() != 0) {
                 closures.remove(0).release();
             }
+        }
+        if (mainWindow) {
+            System.exit(0);
         }
     }
 

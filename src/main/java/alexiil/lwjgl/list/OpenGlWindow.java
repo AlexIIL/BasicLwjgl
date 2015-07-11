@@ -18,7 +18,7 @@ public class OpenGlWindow implements IWindow<OpenGlCallList> {
             }
         }, null);
         Pipeline internal = new InternalPipeline(actual);
-        // window = new LwjglWindowManager(width, height, title, internal);
+        window = new LwjglWindowManager(width, height, title, internal);
     }
 
     @Override
@@ -34,5 +34,10 @@ public class OpenGlWindow implements IWindow<OpenGlCallList> {
     @Override
     public void setRenderer(Runnable render) {
         this.render = render;
+    }
+
+    @Override
+    public void makeMain() {
+        window.mainWindow = true;
     }
 }
