@@ -5,8 +5,11 @@ repositories {
 
 apply plugin: "java"
 apply plugin: "eclipse"
+apply plugin: "maven"
 
 project.ext.lwjglVersion = "3.0.0a"
+version = "1.0"
+group = "alexiil.lwjgl"
 
 dependencies {
     compile "org.lwjgl:lwjgl:${lwjglVersion}"
