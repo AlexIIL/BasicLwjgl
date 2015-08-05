@@ -3,15 +3,21 @@ package alexiil.lwjgl.list;
 import java.awt.Color;
 import java.util.List;
 
+import org.lwjgl.opengl.ContextCapabilities;
 import org.lwjgl.opengl.GL11;
 
-import alexiil.utils.render.glcompat.IRenderCallList;
-
 import com.google.common.collect.Lists;
+
+import alexiil.utils.render.window.IRenderCallList;
 
 public class OpenGlCallList implements IRenderCallList {
     private final List<Runnable> insns = Lists.newArrayList();
     private int listAddress, timesRendered, lastRenderedSize;
+    public final ContextCapabilities caps;
+
+    public OpenGlCallList(ContextCapabilities caps) {
+        this.caps = caps;
+    }
 
     @Override
     public void polygon(double[][] points) {

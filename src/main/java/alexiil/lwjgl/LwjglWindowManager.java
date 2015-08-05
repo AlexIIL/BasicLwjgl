@@ -19,18 +19,22 @@ public class LwjglWindowManager {
     // The window handle
     private long window;
 
+    private final long primaryMonitor;
     private int width, height;
     private final String windowName;
     private final Pipeline pipeline;
+    public final boolean fullscreen;
     private final List<Closure> closures = new ArrayList<Closure>();
     private boolean close = false;
     public boolean mainWindow = false;
 
-    public LwjglWindowManager(int width, int height, String windowName, Pipeline pipe) {
+    public LwjglWindowManager(int width, int height, String windowName, Pipeline pipe, boolean fullscreen) {
         this.width = width;
         this.height = height;
         this.windowName = windowName;
         this.pipeline = pipe;
+        this.fullscreen = fullscreen;
+        primaryMonitor = fullscreen ? GLFW.glfwGetPrimaryMonitor() : MemoryUtil.NULL;
         pipe.setManager(this);
     }
 
@@ -70,7 +74,7 @@ public class LwjglWindowManager {
         GLFW.glfwWindowHint(GLFW.GLFW_RESIZABLE, GL11.GL_TRUE); // the window will be resizable
 
         // Create the window
-        window = GLFW.glfwCreateWindow(width, height, windowName, MemoryUtil.NULL, MemoryUtil.NULL);
+        window = GLFW.glfwCreateWindow(width, height, windowName, primaryMonitor, MemoryUtil.NULL);
         if (window == MemoryUtil.NULL)
             throw new RuntimeException("Failed to create the GLFW window");
 
@@ -148,6 +152,10 @@ public class LwjglWindowManager {
         return height;
     }
 
+    public String getTitle() {
+        return windowName;
+    }
+
     public void close() {
         close = true;
     }
@@ -155,5 +163,11 @@ public class LwjglWindowManager {
     public <T extends Closure> T registerClosure(T closure) {
         closures.add(closure);
         return closure;
+    }
+
+    public void setSize(int width, int height) {
+        GLFW.glfwSetWindowSize(window, width, height);
+        this.width = width;
+        this.height = height;
     }
 }

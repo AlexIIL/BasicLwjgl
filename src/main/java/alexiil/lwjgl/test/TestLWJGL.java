@@ -2,10 +2,9 @@ package alexiil.lwjgl.test;
 
 import org.lwjgl.opengl.GL11;
 
-import alexiil.lwjgl.InternalPipeline;
-import alexiil.lwjgl.LwjglWindowManager;
-import alexiil.lwjgl.Pipeline;
-import alexiil.lwjgl.RunnablePipeline;
+import alexiil.lwjgl.list.OpenGlTools;
+import alexiil.utils.render.window.IRenderingTools;
+import alexiil.utils.render.window.IWindow;
 
 public class TestLWJGL {
     private static boolean up = false, angUp = false;
@@ -83,9 +82,11 @@ public class TestLWJGL {
     }
 
     public static void main(String[] args) {
-        Pipeline runnable = new RunnablePipeline(TestLWJGL::before, TestLWJGL::during, null);
-        Pipeline pipeline = new InternalPipeline(runnable);
-        LwjglWindowManager manager = new LwjglWindowManager(WIDTH, HEIGHT, "Window Title", pipeline);
-        manager.run();
+        IRenderingTools tools = OpenGlTools.init();
+        IWindow<?> window = tools.makeNewWindow();
+        before();
+        window.setRenderer(TestLWJGL::during);
+        window.open(WIDTH, HEIGHT, "Window Title");
+        window.makeMain();
     }
 }
