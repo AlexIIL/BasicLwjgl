@@ -115,7 +115,7 @@ public class OpenGlCallList implements IRenderCallList {
         if (listAddress != -1) {
             GL11.glCallList(listAddress);
         }
-        if (timesRendered > 0) {
+        else {
             listAddress = GL11.glGenLists(1);
             GL11.glNewList(listAddress, GL11.GL_COMPILE_AND_EXECUTE);
         }
