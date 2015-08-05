@@ -6,9 +6,10 @@ import alexiil.lwjgl.InternalPipeline;
 import alexiil.lwjgl.LwjglWindowManager;
 import alexiil.lwjgl.Pipeline;
 import alexiil.lwjgl.RunnablePipeline;
+import alexiil.utils.render.window.IRenderCallList;
 import alexiil.utils.render.window.IWindow;
 
-public class OpenGlWindow implements IWindow<OpenGlCallList> {
+public class OpenGlWindow implements IWindow {
     private Runnable render;
     private LwjglWindowManager window;
     public final ContextCapabilities caps;
@@ -41,8 +42,13 @@ public class OpenGlWindow implements IWindow<OpenGlCallList> {
     }
 
     @Override
-    public void renderCallList(OpenGlCallList list) {
-        list.render();
+    public void renderCallList(IRenderCallList list) {
+        ((OpenGlCallList) list).render();
+    }
+
+    @Override
+    public OpenGlCallList makeCallList() {
+        return new OpenGlCallList(caps);
     }
 
     @Override

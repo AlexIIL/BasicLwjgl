@@ -83,7 +83,7 @@ public class TestLWJGL {
 
     public static void main(String[] args) {
         IRenderingTools tools = OpenGlTools.init();
-        IWindow<?> window = tools.makeNewWindow();
+        IWindow window = tools.makeNewWindow();
         before();
         window.setRenderer(TestLWJGL::during);
         window.open(WIDTH, HEIGHT, "Window Title");
