@@ -3,6 +3,7 @@ package alexiil.lwjgl.list;
 import org.lwjgl.opengl.ContextCapabilities;
 import org.lwjgl.opengl.GLContext;
 
+import alexiil.lwjgl.GLFWManagerThread;
 import alexiil.lwjgl.LwjglWindowManager;
 import alexiil.lwjgl.Pipeline;
 import alexiil.lwjgl.RunnablePipeline;
@@ -21,8 +22,7 @@ public class OpenGlTools implements IRenderingTools {
                 GLContext context = GLContext.createFromCurrent();
                 caps = context.getCapabilities();
             } , () -> {} , () -> {});
-            LwjglWindowManager.startingInit();
-            LwjglWindowManager manager = new LwjglWindowManager(null, 1, 1, "Test Window", pipe, false);
+            LwjglWindowManager manager = GLFWManagerThread.enqueRequest(1, 1, "Test Window", false, pipe, null);
             manager.close();
             manager.init();
             manager.run();

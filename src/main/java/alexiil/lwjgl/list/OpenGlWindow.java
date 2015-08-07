@@ -7,9 +7,10 @@ import java.util.function.Consumer;
 import org.lwjgl.glfw.GLFW;
 import org.lwjgl.opengl.ContextCapabilities;
 
+import alexiil.lwjgl.GLFWManagerThread;
 import alexiil.lwjgl.InternalPipeline;
 import alexiil.lwjgl.LwjglWindowManager;
-import alexiil.lwjgl.LwjglWindowManager.IGLFWEventListener;
+import alexiil.lwjgl.LwjglWindowManager.IGlfwEventListener;
 import alexiil.lwjgl.Pipeline;
 import alexiil.lwjgl.RunnablePipeline;
 import alexiil.utils.input.AKeyEvent;
@@ -22,7 +23,7 @@ import alexiil.utils.input.MouseStateChangeEvent;
 import alexiil.utils.render.window.IRenderCallList;
 import alexiil.utils.render.window.IWindow;
 
-public class OpenGlWindow implements IWindow, IGLFWEventListener {
+public class OpenGlWindow implements IWindow, IGlfwEventListener {
     private Runnable render;
     private LwjglWindowManager window;
     public final ContextCapabilities caps;
@@ -49,7 +50,7 @@ public class OpenGlWindow implements IWindow, IGLFWEventListener {
             }
         } , null);
         Pipeline internal = new InternalPipeline(actual);
-        window = new LwjglWindowManager(this, width, height, title, internal, fullscreen);
+        window = GLFWManagerThread.enqueRequest(width, height, title, fullscreen, internal, this);
         window.init();
         new Thread(() -> {
             window.run();

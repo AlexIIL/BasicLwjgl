@@ -5,7 +5,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.lwjgl.Sys;
-import org.lwjgl.glfw.Callbacks;
 import org.lwjgl.glfw.GLFW;
 import org.lwjgl.glfw.GLFWWindowSizeCallback;
 import org.lwjgl.glfw.GLFWvidmode;
@@ -15,7 +14,7 @@ import org.lwjgl.system.MemoryUtil;
 import org.lwjgl.system.libffi.Closure;
 
 public class LwjglWindowManager {
-    public interface IGLFWEventListener {
+    public interface IGlfwEventListener {
         void curserPosChange(double xpos, double ypos);
 
         void mouseButtonChange(int button, int action, int mods);
@@ -24,7 +23,7 @@ public class LwjglWindowManager {
     private static long fullscreenMonitor = MemoryUtil.NULL;
 
     // The window handle
-    private long window;
+    volatile long window;
 
     private final long primaryMonitor;
     private int width, height;
@@ -32,16 +31,19 @@ public class LwjglWindowManager {
     private final Pipeline pipeline;
     public final boolean fullscreen;
     private final List<Closure> closures = new ArrayList<Closure>();
-    private boolean close = false;
     public boolean mainWindow = false;
-    private final IGLFWEventListener listener;
+    private final IGlfwEventListener listener;
+
+    volatile boolean close = false;
+    volatile boolean hasClosed = false;
+    volatile boolean shouldExit = false;
 
     /** You must call this method if you want to use a fullscreen display */
     public static void startingInit() {
         fullscreenMonitor = GLFW.glfwGetPrimaryMonitor();
     }
 
-    public LwjglWindowManager(IGLFWEventListener listener, int width, int height, String windowName, Pipeline pipe, boolean fullscreen) {
+    LwjglWindowManager(IGlfwEventListener listener, int width, int height, String windowName, Pipeline pipe, boolean fullscreen) {
         this.listener = listener;
         this.width = width;
         this.height = height;
@@ -55,45 +57,28 @@ public class LwjglWindowManager {
     public void run() {
         System.out.println("Using LWJGL version " + Sys.getVersion());
         try {
-            init();
             loop();
-
-            // Release window and window callbacks
-            GLFW.glfwDestroyWindow(window);
-            window = MemoryUtil.NULL;
         } catch (Throwable t) {
             t.printStackTrace();
         } finally {
             // Terminate GLFW and release the closures
-            GLFW.glfwTerminate();
+            System.out.println("Releasing " + closures.size() + " closures...");
             while (closures.size() != 0) {
-                System.out.println("Releasing " + closures.size() + " closures...");
                 closures.remove(0).release();
             }
+            hasClosed = true;
         }
         if (mainWindow) {
-            System.exit(0);
+            shouldExit = true;
         }
     }
 
     public void init() {
-        // Initialize GLFW. Most GLFW functions will not work before doing this.
-        if (GLFW.glfwInit() != GL11.GL_TRUE)
-            throw new IllegalStateException("Unable to initialize GLFW");
-
-        // Setup an error callback. The default implementation
-        // will print the error message in System.err.
-        GLFW.glfwSetErrorCallback(registerClosure(Callbacks.errorCallbackPrint(System.err)));
-
-        // Configure our window
-        GLFW.glfwDefaultWindowHints(); // optional, the current window hints are already the default
-        GLFW.glfwWindowHint(GLFW.GLFW_VISIBLE, GL11.GL_FALSE); // the window will stay hidden after creation
-        GLFW.glfwWindowHint(GLFW.GLFW_RESIZABLE, GL11.GL_TRUE); // the window will be resizable
-
         // Create the window
         window = GLFW.glfwCreateWindow(width, height, windowName, primaryMonitor, MemoryUtil.NULL);
-        if (window == MemoryUtil.NULL)
+        if (window == MemoryUtil.NULL) {
             throw new RuntimeException("Failed to create the GLFW window");
+        }
 
         // Setup a key callback. It will be called every time a key is pressed, repeated or released.
         GLFW.glfwSetKeyCallback(window, registerClosure(GLFW.GLFWKeyCallback((window, key, scancode, action, mods) -> {
@@ -143,13 +128,13 @@ public class LwjglWindowManager {
         System.out.println("OpenGL version " + GL11.glGetString(GL11.GL_VERSION));
     }
 
-    private void loop() {
+    void loop() {
         // This line is critical for LWJGL's interoperation with GLFW's
         // OpenGL context, or any context that is managed externally.
         // LWJGL detects the context that is current in the current thread,
         // creates the ContextCapabilities instance and makes the OpenGL
         // bindings available for use.
-        GLContext.createFromCurrent();
+        GLContext.createFromCurrent();//Crashes here
 
         pipeline.pre();
 
@@ -163,10 +148,6 @@ public class LwjglWindowManager {
             GL11.glPopMatrix();
 
             GLFW.glfwSwapBuffers(window); // swap the color buffers
-
-            // Poll for window events. The key callback above will only be
-            // invoked during this call.
-            GLFW.glfwPollEvents();
         }
 
         pipeline.after();
