@@ -7,7 +7,6 @@ import java.util.List;
 import org.lwjgl.Sys;
 import org.lwjgl.glfw.Callbacks;
 import org.lwjgl.glfw.GLFW;
-import org.lwjgl.glfw.GLFWKeyCallback;
 import org.lwjgl.glfw.GLFWWindowSizeCallback;
 import org.lwjgl.glfw.GLFWvidmode;
 import org.lwjgl.opengl.GL11;
@@ -16,6 +15,14 @@ import org.lwjgl.system.MemoryUtil;
 import org.lwjgl.system.libffi.Closure;
 
 public class LwjglWindowManager {
+    public interface IGLFWEventListener {
+        void curserPosChange(double xpos, double ypos);
+
+        void mouseButtonChange(int button, int action, int mods);
+    }
+
+    private static long fullscreenMonitor = MemoryUtil.NULL;
+
     // The window handle
     private long window;
 
@@ -27,30 +34,40 @@ public class LwjglWindowManager {
     private final List<Closure> closures = new ArrayList<Closure>();
     private boolean close = false;
     public boolean mainWindow = false;
+    private final IGLFWEventListener listener;
 
-    public LwjglWindowManager(int width, int height, String windowName, Pipeline pipe, boolean fullscreen) {
+    /** You must call this method if you want to use a fullscreen display */
+    public static void startingInit() {
+        fullscreenMonitor = GLFW.glfwGetPrimaryMonitor();
+    }
+
+    public LwjglWindowManager(IGLFWEventListener listener, int width, int height, String windowName, Pipeline pipe, boolean fullscreen) {
+        this.listener = listener;
         this.width = width;
         this.height = height;
         this.windowName = windowName;
         this.pipeline = pipe;
         this.fullscreen = fullscreen;
-        primaryMonitor = fullscreen ? GLFW.glfwGetPrimaryMonitor() : MemoryUtil.NULL;
+        primaryMonitor = fullscreen ? fullscreenMonitor : MemoryUtil.NULL;
         pipe.setManager(this);
     }
 
     public void run() {
-        System.out.println("Hello LWJGL " + Sys.getVersion());
+        System.out.println("Using LWJGL version " + Sys.getVersion());
         try {
             init();
             loop();
 
             // Release window and window callbacks
             GLFW.glfwDestroyWindow(window);
-        }
-        finally {
-            // Terminate GLFW and release the GLFWerrorfun
+            window = MemoryUtil.NULL;
+        } catch (Throwable t) {
+            t.printStackTrace();
+        } finally {
+            // Terminate GLFW and release the closures
             GLFW.glfwTerminate();
             while (closures.size() != 0) {
+                System.out.println("Releasing " + closures.size() + " closures...");
                 closures.remove(0).release();
             }
         }
@@ -59,14 +76,14 @@ public class LwjglWindowManager {
         }
     }
 
-    private void init() {
-        // Setup an error callback. The default implementation
-        // will print the error message in System.err.
-        GLFW.glfwSetErrorCallback(registerClosure(Callbacks.errorCallbackPrint(System.err)));
-
+    public void init() {
         // Initialize GLFW. Most GLFW functions will not work before doing this.
         if (GLFW.glfwInit() != GL11.GL_TRUE)
             throw new IllegalStateException("Unable to initialize GLFW");
+
+        // Setup an error callback. The default implementation
+        // will print the error message in System.err.
+        GLFW.glfwSetErrorCallback(registerClosure(Callbacks.errorCallbackPrint(System.err)));
 
         // Configure our window
         GLFW.glfwDefaultWindowHints(); // optional, the current window hints are already the default
@@ -79,13 +96,24 @@ public class LwjglWindowManager {
             throw new RuntimeException("Failed to create the GLFW window");
 
         // Setup a key callback. It will be called every time a key is pressed, repeated or released.
-        GLFW.glfwSetKeyCallback(window, registerClosure(new GLFWKeyCallback() {
-            @Override
-            public void invoke(long window, int key, int scancode, int action, int mods) {
-                if (key == GLFW.GLFW_KEY_ESCAPE && action == GLFW.GLFW_RELEASE)
-                    GLFW.glfwSetWindowShouldClose(window, GL11.GL_TRUE); // We will detect this in our rendering loop
+        GLFW.glfwSetKeyCallback(window, registerClosure(GLFW.GLFWKeyCallback((window, key, scancode, action, mods) -> {
+            // Force exit when the "Esc+Shift+Ctrl+Alt" keys are pressed
+            if (key == GLFW.GLFW_KEY_ESCAPE && action == GLFW.GLFW_RELEASE && mods == 7) {
+                GLFW.glfwSetWindowShouldClose(window, GL11.GL_TRUE); // We will detect this in our rendering loop
+            } else {
+
             }
-        }));
+        })));
+
+        if (listener != null) {
+            GLFW.glfwSetMouseButtonCallback(window, registerClosure(GLFW.GLFWMouseButtonCallback((window, button, action, mods) -> {
+                listener.mouseButtonChange(button, action, mods);
+            })));
+
+            GLFW.glfwSetCursorPosCallback(window, registerClosure(GLFW.GLFWCursorPosCallback((window, xpos, ypos) -> {
+                listener.curserPosChange(xpos, ypos);
+            })));
+        }
 
         GLFW.glfwSetWindowSizeCallback(window, new GLFWWindowSizeCallback() {
             @Override

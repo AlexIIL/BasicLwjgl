@@ -8,6 +8,7 @@ import org.lwjgl.opengl.GL11;
 
 import com.google.common.collect.Lists;
 
+import alexiil.lwjgl.font.FontRenderer;
 import alexiil.utils.render.window.IRenderCallList;
 
 public class OpenGlCallList implements IRenderCallList {
@@ -42,8 +43,14 @@ public class OpenGlCallList implements IRenderCallList {
     }
 
     @Override
-    public int[] text(String text, double x, double y, int size) {
-        return null;
+    public int[] text(String text, double x, double y, int size, boolean centerX, boolean centerY) {
+        insns.add(() -> {
+            GL11.glPushMatrix();
+            GL11.glScaled(size, size, size);
+            FontRenderer.renderFont(this, text, size).run();
+            GL11.glPopMatrix();
+        });
+        return FontRenderer.getSize(text, size);
     }
 
     @Override
@@ -106,29 +113,28 @@ public class OpenGlCallList implements IRenderCallList {
         int size = insns.size();
         if (size != lastRenderedSize) {
             lastRenderedSize = size;
-            timesRendered = 0;
             dispose();
             listAddress = -1;
         }
 
-        GL11.glPushMatrix();
         if (listAddress != -1) {
+            GL11.glPushMatrix();
             GL11.glCallList(listAddress);
+            GL11.glPopMatrix();
+            return;
         }
-        else {
-            listAddress = GL11.glGenLists(1);
-            GL11.glNewList(listAddress, GL11.GL_COMPILE_AND_EXECUTE);
-        }
+        listAddress = GL11.glGenLists(1);
+
+        GL11.glNewList(listAddress, GL11.GL_COMPILE);
+
+        GL11.glPushMatrix();
 
         for (Runnable insn : insns)
             insn.run();
 
-        if (timesRendered > 0) {
-            GL11.glEndList();
-        }
-
         GL11.glPopMatrix();
 
-        timesRendered++;
+        GL11.glEndList();
+        GL11.glCallList(listAddress);
     }
 }

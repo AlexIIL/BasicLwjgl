@@ -21,11 +21,12 @@ public class OpenGlTools implements IRenderingTools {
                 GLContext context = GLContext.createFromCurrent();
                 caps = context.getCapabilities();
             } , () -> {} , () -> {});
-            LwjglWindowManager manager = new LwjglWindowManager(1, 1, "Test Window", pipe, false);
+            LwjglWindowManager.startingInit();
+            LwjglWindowManager manager = new LwjglWindowManager(null, 1, 1, "Test Window", pipe, false);
             manager.close();
+            manager.init();
             manager.run();
-        }
-        catch (Throwable t) {
+        } catch (Throwable t) {
             System.out.println("Open GL is not supported on this hardware!");
             t.printStackTrace();
         }
